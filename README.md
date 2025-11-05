@@ -16,7 +16,7 @@
 
 <table align="center">
 <tr>
-<td align="center" width="400px" valign="top">
+<td align="center" width="200px" valign="top">
 
 ### 🎨 Frontend  
 <a href="https://developer.mozilla.org/en-US/docs/Web/HTML" title="HTML"><img src="https://skillicons.dev/icons?i=html" width="50" height="50"/></a>
@@ -28,7 +28,7 @@
 
 </td>
 
-<td align="center" width="400px" valign="top">
+<td align="center" width="200px" valign="top">
 
 ### ⚙️ Backend  
 <a href="https://nodejs.org/" title="Node.js"><img src="https://skillicons.dev/icons?i=nodejs" width="50" height="50"/></a>
@@ -41,7 +41,7 @@
 </tr>
 
 <tr>
-<td align="center" colspan="2" valign="top">
+<td align="center" width="200px" valign="top">
 
 ### ⛓️ Others  
 <a href="https://soliditylang.org/" title="Solidity"><img src="https://skillicons.dev/icons?i=solidity" width="50" height="50"/></a>
