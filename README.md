@@ -21,7 +21,7 @@
 
 ### 🧑‍💻 About Me
 
-<img align="right" src="https://github-readme-stats.vercel.app/api/top-langs/?username=itsvishalyadav&layout=donut-vertical&theme=github_dark&hide_border=true&bg_color=0d1117&langs_count=6" width="280" />
+<img align="right" width="1333" height="1514" alt="pp" src="https://github.com/user-attachments/assets/718f8d9e-0906-47a6-8510-ad9df2346914" width="280" />
 
 - 🎓 **B.Tech CSE** — ABV-IIITM Gwalior
 - 💼 **Incoming SWE Intern** at **Google** (Summer '27)
