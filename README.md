@@ -1,78 +1,86 @@
-# 👋 Hi, I'm Vishal Yadav  
+<div align="center">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=600&size=30&pause=1000&color=2F80ED&center=true&vCenter=true&width=600&lines=Hi,+I'm+Vishal+Yadav+👋;Incoming+Google+SWE+Intern;Cloud+Native+%26+Go+Developer;Open+Source+Contributor" alt="Typing SVG" />
+</div>
 
-### 💫 About Me  
-🎓 B.Tech CSE Student at IIITM Gwalior  
-💻 Passionate about **Cloud Native technologies**, **Go**, and **Open Source**  
-🚀 Currently contributing to CNCF and LFX projects (e.g., Kyverno, HAMi, Apicurio Registry)  
-🌟 Actively seeking opportunities to learn, contribute, and grow within the open-source ecosystem, particularly through LFX Mentorships.
+<p align="center">
+  <em>Building open, scalable, and secure systems in the Cloud Native ecosystem.</em>
+</p>
 
----
-
-### 🌐 Socials  
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/vishal-yadav-iiitm)  
-[![Email](https://img.shields.io/badge/Gmail-D14836?logo=gmail&logoColor=white)](mailto:vishalyadav87695@gmail.com)
-
----
-### 🧠 Skills  
-
-<table align="center">
-<tr>
-
-<td align="center" width="300px" valign="top">
-
-### ☁️ Cloud Native & DevOps
-<a href="https://golang.org/" title="Go"><img src="https://skillicons.dev/icons?i=go" width="50"/></a>
-<a href="https://kubernetes.io/" title="Kubernetes"><img src="https://skillicons.dev/icons?i=kubernetes" width="50"/></a>
-<a href="https://www.docker.com/" title="Docker"><img src="https://skillicons.dev/icons?i=docker" width="50"/></a>
-<a href="https://www.linux.org/" title="Linux"><img src="https://skillicons.dev/icons?i=linux" width="50"/></a>
-<a href="https://www.gnu.org/software/bash/" title="Bash"><img src="https://skillicons.dev/icons?i=bash" width="50"/></a>
-<a href="https://github.com/features/actions" title="GitHub Actions"><img src="https://skillicons.dev/icons?i=githubactions" width="50"/></a>
-
-</td>
-
-<td align="center" width="300px" valign="top">
-
-### ⚙️ Backend & Systems
-<a href="https://isocpp.org/" title="C++"><img src="https://skillicons.dev/icons?i=cpp" width="50"/></a>
-<a href="https://www.java.com/" title="Java"><img src="https://skillicons.dev/icons?i=java" width="50"/></a>
-<a href="https://nodejs.org/" title="Node.js"><img src="https://skillicons.dev/icons?i=nodejs" width="50"/></a>
-<a href="https://www.python.org/" title="Python"><img src="https://skillicons.dev/icons?i=python" width="50"/></a>
-<a href="https://www.mysql.com/" title="MySQL"><img src="https://skillicons.dev/icons?i=mysql" width="50"/></a>
-<a href="https://www.mongodb.com/" title="MongoDB"><img src="https://skillicons.dev/icons?i=mongodb" width="50"/></a>
-
-</td>
-
-<td align="center" width="300px" valign="top">
-
-### 🎨 Frontend & Other
-<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" title="JavaScript"><img src="https://skillicons.dev/icons?i=javascript" width="50"/></a>
-<a href="https://reactjs.org/" title="React"><img src="https://skillicons.dev/icons?i=react" width="50"/></a>
-<a href="https://tailwindcss.com/" title="Tailwind CSS"><img src="https://skillicons.dev/icons?i=tailwind" width="50"/></a>
-<a href="https://git-scm.com/" title="Git"><img src="https://skillicons.dev/icons?i=git" width="50"/></a>
-<a href="https://code.visualstudio.com/" title="VS Code"><img src="https://skillicons.dev/icons?i=vscode" width="50"/></a>
-<a href="https://soliditylang.org/" title="Solidity"><img src="https://skillicons.dev/icons?i=solidity" width="50"/></a>
-
-</td>
-</tr>
-</table>
+<p align="center">
+  <a href="https://www.linkedin.com/in/vishal-yadav-iiitm"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" /></a>
+  <a href="mailto:vishalyadav87695@gmail.com"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Gmail" /></a>
+</p>
 
 ---
 
-### 📊 GitHub Stats  
-![](https://github-readme-stats.vercel.app/api?username=itsvishalyadav&theme=tokyonight&hide_border=false&include_all_commits=true&count_private=false)
-![](https://github-readme-streak-stats.herokuapp.com/?user=itsvishalyadav&theme=tokyonight&hide_border=false)
-![](https://github-readme-stats.vercel.app/api/top-langs/?username=itsvishalyadav&theme=tokyonight&hide_border=false&layout=compact)
+### 💫 About Me
+
+I am a deeply passionate Systems Engineer focusing on Kubernetes internals, policy engines, and highly concurrent Go applications. I actively contribute to the CNCF ecosystem, tackling complex security and architectural challenges.
+
+- 🎓 **B.Tech CSE Student** at ABV-IIITM Gwalior
+- 💼 **Incoming Software Engineering Intern** at **Google** (Summer 2027)
+- 🚀 **Open Source Contributor:** Deeply involved with **CNCF Kyverno**, having shipped 13+ PRs spanning core CEL engine execution, security policy updates, and standard library CVE compiler patching. Also contributing to **HAMi** and **Apicurio Registry**.
+- 🛠️ **Current Focus:** Cloud-Native Security, Kubernetes Controllers, and Go Toolchain internals.
+- 🎯 **Goal:** Building impactful decentralized systems and securing the open-source supply chain.
 
 ---
 
-### 🏆 GitHub Trophies  
-![](https://github-profile-trophy.vercel.app/?username=itsvishalyadav&theme=darkhub&no-frame=false&no-bg=true&margin-w=4)
+### 🧠 Tech Stack & Arsenal
+
+<div align="center">
+  
+**Cloud Native & DevOps**  
+<br/>
+<a href="https://golang.org/"><img src="https://skillicons.dev/icons?i=go,kubernetes,docker,linux,bash,githubactions&perline=6" /></a>
+
+<br/>
+  
+**Backend & Systems**  
+<br/>
+<a href="#"><img src="https://skillicons.dev/icons?i=cpp,java,nodejs,python,mysql,mongodb&perline=6" /></a>
+
+<br/>
+  
+**Frontend & Web3**  
+<br/>
+<a href="#"><img src="https://skillicons.dev/icons?i=ts,react,tailwind,vscode,git,solidity&perline=6" /></a>
+
+</div>
 
 ---
 
-### ✨ Contribution Graph  
-![GitHub Activity Graph](https://github-readme-activity-graph.vercel.app/graph?username=itsvishalyadav&theme=github-dark)
+### 📊 GitHub Analytics
+
+<div align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=itsvishalyadav&theme=tokyonight&hide_border=false&include_all_commits=true&count_private=false&show_icons=true" height="195" alt="GitHub Stats" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=itsvishalyadav&theme=tokyonight&hide_border=false&layout=compact" height="195" alt="Top Languages" />
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=itsvishalyadav&theme=tokyonight&hide_border=false" alt="GitHub Streak" />
+</div>
 
 ---
 
-⭐️ *“Building open, scalable, and decentralized systems.”*
+### 🏆 Open Source Trophies
+
+<div align="center">
+  <a href="https://github.com/ryo-ma/github-profile-trophy">
+    <img src="https://github-profile-trophy.vercel.app/?username=itsvishalyadav&theme=darkhub&no-frame=false&no-bg=true&margin-w=15" alt="Trophies" />
+  </a>
+</div>
+
+---
+
+### ✨ Activity Graph
+
+<div align="center">
+  <img src="https://github-readme-activity-graph.vercel.app/graph?username=itsvishalyadav&theme=tokyonight&hide_border=true&area=true" alt="Activity Graph" width="100%" />
+</div>
+
+<br/>
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=2F80ED&height=100&section=footer" />
+</p>
