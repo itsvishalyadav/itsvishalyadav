@@ -1,45 +1,46 @@
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1a1b27,100:2F80ED&height=220&section=header&text=Vishal%20Yadav&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Systems%20Engineer%20%7C%20Cloud-Native%20Security%20%7C%20Incoming%20Google%20SWE%20Intern&descAlignY=55&descSize=18&descColor=58a6ff" width="100%" />
+
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=250&section=header&text=Hi,%20I'm%20Vishal%20Yadav%20👋&fontSize=50&animation=fadeIn&fontAlignY=38&desc=Incoming%20Google%20SWE%20Intern%20|%20Cloud-Native%20Engineer&descAlignY=55&descAlign=50&fontColor=ffffff" alt="Header Banner" />
+  
+  [![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=22&duration=3000&pause=1000&color=58A6FF&center=true&vCenter=true&multiline=true&repeat=true&width=700&height=80&lines=13%2B+merged+PRs+to+CNCF+Kyverno+%F0%9F%94%A5;Patching+Go+compilers+and+hunting+CVEs+%F0%9F%9B%A1%EF%B8%8F;Building+Kubernetes+policy+engines+in+Go+%E2%9A%99%EF%B8%8F)](https://github.com/itsvishalyadav)
+
 </div>
 
-<p align="center">
-  <a href="https://www.linkedin.com/in/vishal-yadav-iiitm"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" /></a>
-  <a href="mailto:vishalyadav87695@gmail.com"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Gmail" /></a>
-</p>
-
----
-
-### 💫 About Me
-
-I am a deeply passionate Systems Engineer focusing on Kubernetes internals, policy engines, and highly concurrent Go applications. I actively contribute to the CNCF ecosystem, tackling complex security and architectural challenges.
-
-- 🎓 **B.Tech CSE Student** at ABV-IIITM Gwalior
-- 💼 **Incoming Software Engineering Intern** at **Google** (Summer 2027)
-- 🚀 **Core Contributor:** Shipped **13+ merged PRs** to **CNCF Kyverno**, spanning core CEL engine execution, security policy updates, and Go compiler CVE patching. Also contributing to **HAMi** and **Apicurio Registry**.
-- 🛠️ **Current Focus:** Cloud-Native Security, Kubernetes Controllers, and Systems Engineering.
-- 🎯 **Goal:** Building impactful decentralized systems and securing the open-source supply chain.
-
----
-
-### 🧠 Tech Stack & Arsenal
+<br/>
 
 <div align="center">
-  
-**Cloud Native & DevOps**  
-<br/>
-<a href="https://golang.org/"><img src="https://skillicons.dev/icons?i=go,kubernetes,docker,linux,bash,githubactions&perline=6" /></a>
+  <a href="https://www.linkedin.com/in/vishal-yadav-iiitm"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" /></a>&nbsp;
+  <a href="mailto:vishalyadav87695@gmail.com"><img src="https://img.shields.io/badge/Gmail-EA4335?style=for-the-badge&logo=gmail&logoColor=white" /></a>&nbsp;
+  <a href="https://github.com/itsvishalyadav"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" /></a>&nbsp;
+  <img src="https://komarev.com/ghpvc/?username=itsvishalyadav&style=for-the-badge&color=2F80ED&label=PROFILE+VIEWS" />
+</div>
 
 <br/>
-  
-**Backend & Systems**  
-<br/>
-<a href="#"><img src="https://skillicons.dev/icons?i=cpp,java,nodejs,python,mysql,mongodb&perline=6" /></a>
 
-<br/>
-  
-**Frontend & Web3**  
-<br/>
-<a href="#"><img src="https://skillicons.dev/icons?i=ts,react,tailwind,vscode,git,solidity&perline=6" /></a>
+---
+
+<img align="right" src="https://github.com/itsvishalyadav/itsvishalyadav/blob/output/github-snake-dark.svg" width="400" alt="Snake animation" />
+
+### 🧑‍💻 Who I Am
+
+- 🎓 **B.Tech CSE** — ABV-IIITM Gwalior
+- 💼 **Incoming SWE Intern** at **Google** (Summer '27)
+- 🛡️ **Core Contributor** to [CNCF Kyverno](https://github.com/kyverno/kyverno) — **13+ PRs merged** into `main` and active release branches
+- 🔬 **Specialty:** Go compiler patching, Kubernetes admission controllers, CEL engine internals, and CVE security triage
+- 🌱 **Also contributing to:** HAMi, Apicurio Registry
+
+<br clear="right"/>
+
+---
+
+### ⚡ Tech Stack
+
+<div align="center">
+
+| Cloud Native & DevOps | Backend & Systems | Frontend & Web3 |
+|:---:|:---:|:---:|
+| <img src="https://skillicons.dev/icons?i=go,kubernetes,docker&theme=dark" /> | <img src="https://skillicons.dev/icons?i=cpp,java,python&theme=dark" /> | <img src="https://skillicons.dev/icons?i=ts,react,tailwind&theme=dark" /> |
+| <img src="https://skillicons.dev/icons?i=linux,bash,githubactions&theme=dark" /> | <img src="https://skillicons.dev/icons?i=nodejs,mysql,mongodb&theme=dark" /> | <img src="https://skillicons.dev/icons?i=git,vscode,solidity&theme=dark" /> |
 
 </div>
 
@@ -47,40 +48,46 @@ I am a deeply passionate Systems Engineer focusing on Kubernetes internals, poli
 
 ### 📊 GitHub Analytics
 
-*(Swapped to a more stable, visually appealing card generator since the default one was experiencing API downtime)*
-
 <div align="center">
-  <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=itsvishalyadav&theme=tokyonight" alt="GitHub Stats" />
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=itsvishalyadav&theme=github_dark" width="100%" />
 </div>
 
 <br/>
 
 <div align="center">
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=itsvishalyadav&theme=tokyonight&hide_border=false" alt="GitHub Streak" />
-</div>
-
----
-
-### 🏆 Open Source Trophies
-
-<div align="center">
-  <a href="https://github.com/ryo-ma/github-profile-trophy">
-    <img src="https://github-profile-trophy.vercel.app/?username=itsvishalyadav&theme=darkhub&no-frame=false&no-bg=true&margin-w=15" alt="Trophies" />
-  </a>
-</div>
-
----
-
-### ✨ Activity Graph
-
-<div align="center">
-  <img src="https://github-readme-activity-graph.vercel.app/graph?username=itsvishalyadav&theme=tokyonight&hide_border=true&area=true" alt="Activity Graph" width="100%" />
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=itsvishalyadav&theme=github_dark" width="32%" />
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=itsvishalyadav&theme=github_dark" width="32%" />
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=itsvishalyadav&theme=github_dark" width="32%" />
 </div>
 
 <br/>
-<p align="center">
-  <img src="https://profile-counter.glitch.me/itsvishalyadav/count.svg" alt="Profile Views" />
-</p>
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=100&section=footer" alt="Footer Banner" />
-</p>
+
+<div align="center">
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=itsvishalyadav&theme=github-dark-blue&hide_border=true&border_radius=10&date_format=j%20M%5B%20Y%5D" alt="GitHub Streak" />
+</div>
+
+---
+
+### 🏆 Trophies
+
+<div align="center">
+  <img src="https://github-profile-trophy.vercel.app/?username=itsvishalyadav&theme=algolia&no-frame=true&no-bg=true&margin-w=10&column=7" />
+</div>
+
+---
+
+### ✨ Contribution Graph
+
+<div align="center">
+  <img src="https://github-readme-activity-graph.vercel.app/graph?username=itsvishalyadav&theme=github-dark&hide_border=true&area=true&custom_title=Contribution%20Timeline" width="100%" />
+</div>
+
+---
+
+<div align="center">
+  <em>"I want to work on things where getting it wrong has real consequences."</em>
+</div>
+
+<br/>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1a1b27,100:2F80ED&height=100&section=footer" width="100%" />
