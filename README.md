@@ -21,7 +21,7 @@
 
 ### 🧑‍💻 About Me
 
-<img align="right" width="1333" height="1514" alt="pp" src="https://github.com/user-attachments/assets/718f8d9e-0906-47a6-8510-ad9df2346914" width="280" />
+<img align="right" src="https://github.com/user-attachments/assets/718f8d9e-0906-47a6-8510-ad9df2346914" width="200" style="border-radius: 50%;" />
 
 - 🎓 **B.Tech CSE** — ABV-IIITM Gwalior
 - 💼 **Incoming SWE Intern** at **Google** (Summer '27)
