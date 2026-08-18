@@ -2,7 +2,7 @@
 
 <div align="center">
   
-  [![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=22&duration=3000&pause=1000&color=58A6FF&center=true&vCenter=true&multiline=true&repeat=true&width=700&height=80&lines=13%2B+merged+PRs+to+CNCF+Kyverno+%F0%9F%94%A5;Patching+Go+compilers+and+hunting+CVEs+%F0%9F%9B%A1%EF%B8%8F;Building+Kubernetes+policy+engines+in+Go+%E2%9A%99%EF%B8%8F)](https://github.com/itsvishalyadav)
+  [![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=20&duration=3000&pause=1000&color=58A6FF&center=true&vCenter=true&repeat=true&width=550&height=35&lines=CNCF+Contributor+%E2%80%A2+Kubernetes+Security;Go+%7C+Policy+Engines+%7C+Systems+Engineering;Securing+the+Cloud-Native+Supply+Chain)](https://github.com/itsvishalyadav)
 
 </div>
 
@@ -19,17 +19,33 @@
 
 ---
 
-<img align="right" src="https://github.com/itsvishalyadav/itsvishalyadav/blob/output/github-snake-dark.svg" width="400" alt="Snake animation" />
+### 🧑‍💻 About Me
 
-### 🧑‍💻 Who I Am
+<img align="right" src="https://github-readme-stats.vercel.app/api/top-langs/?username=itsvishalyadav&layout=donut-vertical&theme=github_dark&hide_border=true&bg_color=0d1117&langs_count=6" width="280" />
 
 - 🎓 **B.Tech CSE** — ABV-IIITM Gwalior
 - 💼 **Incoming SWE Intern** at **Google** (Summer '27)
 - 🛡️ **Core Contributor** to [CNCF Kyverno](https://github.com/kyverno/kyverno) — **13+ PRs merged** into `main` and active release branches
-- 🔬 **Specialty:** Go compiler patching, Kubernetes admission controllers, CEL engine internals, and CVE security triage
+- 🔬 **Domains:** Kubernetes Admission Controllers, CEL Engine Internals, Go Toolchain Security, CVE Triage & Patching
 - 🌱 **Also contributing to:** HAMi, Apicurio Registry
+- ⚡ **Fun fact:** I once patched a Go compiler vulnerability and got it merged into a CNCF release milestone in under 2 hours
 
 <br clear="right"/>
+
+---
+
+### 🚀 Highlighted Contributions
+
+<div align="center">
+
+| Project | What I Did | Impact |
+|:---|:---|:---|
+| <img src="https://img.shields.io/badge/Kyverno-326CE5?style=flat-square&logo=kubernetes&logoColor=white" /> | Patched HTTP/2 CVE by bumping Go compiler toolchain | Merged into **Release 1.20.0** |
+| <img src="https://img.shields.io/badge/Kyverno-326CE5?style=flat-square&logo=kubernetes&logoColor=white" /> | Fixed context propagation leak in webhook controllers | Resolved admission handler bugs |
+| <img src="https://img.shields.io/badge/Kyverno-326CE5?style=flat-square&logo=kubernetes&logoColor=white" /> | Co-authored SyncWatchers core fix with maintainers | Fast-tracked merge by core team |
+| <img src="https://img.shields.io/badge/Kyverno-326CE5?style=flat-square&logo=kubernetes&logoColor=white" /> | Bumped `golang.org/x/net` to resolve CVE-2026-56853 | Security-critical dependency patch |
+
+</div>
 
 ---
 
@@ -46,6 +62,21 @@
 
 ---
 
+### 🔭 Currently Working On
+
+<div align="center">
+
+```
+🛡️  Kyverno — Triaging and patching high-severity CVEs across Go toolchain & dependencies
+📝  Kyverno — Exploring CEL evaluation tracing for policy debugging
+🔬  Kubernetes — Studying KEP-127 (User Namespaces) and Pod Security Standards internals
+🌱  CNCF — Contributing to HAMi and Apicurio Registry
+```
+
+</div>
+
+---
+
 ### 📊 GitHub Analytics
 
 <div align="center">
@@ -57,7 +88,7 @@
 <div align="center">
   <img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=itsvishalyadav&theme=github_dark" width="32%" />
   <img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=itsvishalyadav&theme=github_dark" width="32%" />
-  <img src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=itsvishalyadav&theme=github_dark" width="32%" />
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/productive-time?username=itsvishalyadav&theme=github_dark&utcOffset=5.5" width="32%" />
 </div>
 
 <br/>
@@ -83,6 +114,12 @@
 </div>
 
 ---
+
+<div align="center">
+  <img src="https://quotes-github-readme.vercel.app/api?type=horizontal&theme=dark" alt="Dev Quote" />
+</div>
+
+<br/>
 
 <div align="center">
   <em>"I want to work on things where getting it wrong has real consequences."</em>
