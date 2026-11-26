@@ -1,281 +1,352 @@
-"""Builds the profile's SVG cards (dark + light) from live GitHub data.
+"""Builds the profile's SVG panels (dark + light) from live GitHub data.
 
-Run locally with GITHUB_TOKEN set, or from .github/workflows/profile.yml.
-Outputs go to assets/. No third-party packages needed.
+Design: an engineering spec sheet. Big Shoulders Display + IBM Plex Mono
+(both OFL, subset and embedded), safety amber and deep green as solid fills,
+square corners, hard rules. No gradients, blur, glass or fade-ins.
+
+Run with GITHUB_TOKEN set (the contribution calendar needs it).
+Only the Python standard library is used.
 """
 
+import base64
 import datetime as dt
 import json
 import os
+import re
 import urllib.parse
 import urllib.request
 from html import escape
 
 USER = "itsvishalyadav"
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets")
+HERE = os.path.dirname(os.path.abspath(__file__))
+VENDOR = os.path.join(HERE, "vendor")
+OUT = os.path.join(HERE, "..", "assets")
+W = 1000
 
 THEMES = {
     "dark": {
-        "bg": "#07080c", "panel": "#0f1219", "panel2": "#141824", "stroke": "#232838",
-        "text": "#e6e9f2", "muted": "#7c8499", "dim": "#4a5164",
-        "a1": "#22d3ee", "a2": "#a78bfa", "a3": "#f472b6", "ok": "#34d399",
-        "orb": "0.55", "grid": "0.06",
+        "bg": "#121310", "ink": "#ECEAE3", "muted": "#8C8A80", "rule": "#34352F",
+        "amber": "#F2B705", "on_amber": "#121310", "green": "#4C9A6F",
+        "num": "#F2B705", "empty": "#1E1F1A",
+        "heat": ["#1E1F1A", "#1E4D38", "#2F6B4F", "#4C9A6F", "#F2B705"],
     },
     "light": {
-        "bg": "#f6f7fb", "panel": "#ffffff", "panel2": "#f0f2f8", "stroke": "#dfe3ee",
-        "text": "#141824", "muted": "#5b6478", "dim": "#a3aabb",
-        "a1": "#0891b2", "a2": "#7c3aed", "a3": "#db2777", "ok": "#059669",
-        "orb": "0.30", "grid": "0.07",
+        "bg": "#ECEBE5", "ink": "#141510", "muted": "#6E6C63", "rule": "#C9C7BE",
+        "amber": "#F2B705", "on_amber": "#141510", "green": "#1F5A3F",
+        "num": "#141510", "empty": "#DEDCD4",
+        "heat": ["#DEDCD4", "#B9D3C2", "#6FA486", "#1F5A3F", "#E0A800"],
     },
 }
 
-MONO = "'JetBrains Mono','SF Mono','Cascadia Code',Consolas,'Liberation Mono',monospace"
-SANS = "'Inter','Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif"
+DISPLAY = "'BSD',Impact,'Arial Narrow',sans-serif"
+MONO = "'PLX','IBM Plex Mono',Consolas,monospace"
 
 
-# ---------------------------------------------------------------- data
+# ------------------------------------------------------------------ data
 
-def api(path):
-    req = urllib.request.Request("https://api.github.com" + path, headers={"Accept": "application/vnd.github+json"})
-    token = os.environ.get("GITHUB_TOKEN")
-    if token:
-        req.add_header("Authorization", "Bearer " + token)
-    with urllib.request.urlopen(req, timeout=30) as r:
+def _req(url, body=None):
+    req = urllib.request.Request(url, data=body, headers={"Accept": "application/vnd.github+json"})
+    tok = os.environ.get("GITHUB_TOKEN")
+    if tok:
+        req.add_header("Authorization", "Bearer " + tok)
+    if body:
+        req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req, timeout=40) as r:
         return json.load(r)
 
 
-def count(query):
-    return api("/search/issues?per_page=1&q=" + urllib.parse.quote(query))["total_count"]
+def search(q, per_page=1, sort=None):
+    url = "https://api.github.com/search/issues?per_page=%d&q=%s" % (per_page, urllib.parse.quote(q))
+    if sort:
+        url += "&sort=%s&order=desc" % sort
+    return _req(url)
 
 
-def repos_touched(query):
-    names = set()
-    page = 1
-    while True:
-        data = api(f"/search/issues?per_page=100&page={page}&q=" + urllib.parse.quote(query))
-        for item in data["items"]:
-            names.add(item["repository_url"].rsplit("/", 1)[1])
-        if len(data["items"]) < 100 or page >= 10:
-            return len(names)
+def repos_touched(q):
+    names, page = set(), 1
+    while page <= 10:
+        items = _req("https://api.github.com/search/issues?per_page=100&page=%d&q=%s" % (page, urllib.parse.quote(q)))["items"]
+        names.update(i["repository_url"].rsplit("/", 1)[1] for i in items)
+        if len(items) < 100:
+            break
         page += 1
+    return len(names)
+
+
+def clean_title(t):
+    t = re.sub(r"^\w+(\([^)]*\))?!?:\s*", "", t)  # drop "fix(scope): "
+    return t[:1].upper() + t[1:]
+
+
+def recent_merged(n=10):
+    q = f"author:{USER} is:pr is:merged -user:{USER} -user:piyxsh31"
+    items = search(q, per_page=40, sort="updated")["items"]
+    out = []
+    for i in items:
+        merged = (i.get("pull_request") or {}).get("merged_at")
+        if merged:
+            repo = i["repository_url"].rsplit("/", 1)[1]
+            out.append((merged, f"{repo}#{i['number']}", clean_title(i["title"])))
+    out.sort(reverse=True)
+    return [(r, t) for _, r, t in out[:n]]
+
+
+def calendar():
+    q = {"query": 'query{user(login:"%s"){contributionsCollection{contributionCalendar{totalContributions weeks{contributionDays{date contributionCount}}}}}}' % USER}
+    cal = _req("https://api.github.com/graphql", json.dumps(q).encode())["data"]["user"]["contributionsCollection"]["contributionCalendar"]
+    return cal["totalContributions"], [[(d["date"], d["contributionCount"]) for d in w["contributionDays"]] for w in cal["weeks"]]
 
 
 def gather():
-    user = api(f"/users/{USER}")
-    created = dt.datetime.fromisoformat(user["created_at"].replace("Z", "+00:00")).date()
-    days = (dt.date.today() - created).days
+    ks_q = f"author:{USER} org:kubescape is:pr is:merged"
+    try:
+        total, weeks = calendar()
+    except Exception as e:  # keep the last heatmap if the calendar can't be read
+        print("calendar unavailable:", e)
+        total, weeks = None, None
     return {
-        "ks": count(f"author:{USER} org:kubescape is:pr is:merged"),
-        "ks_repos": repos_touched(f"author:{USER} org:kubescape is:pr is:merged"),
-        "kv": count(f"author:{USER} org:kyverno is:pr is:merged"),
-        "issues": count(f"author:{USER} is:issue -user:{USER}"),
-        # PRs merged into other people's projects (a friend's class-assignment repo left out)
-        "oss": count(f"author:{USER} is:pr is:merged -user:{USER} -user:piyxsh31"),
-        "uptime": f"{days // 365}y {(days % 365) // 30}m" if days >= 365 else f"{days // 30} months",
-        "updated": dt.date.today().strftime("%d %b %Y"),
+        "ks": search(ks_q)["total_count"],
+        "ks_repos": repos_touched(ks_q),
+        "kv": search(f"author:{USER} org:kyverno is:pr is:merged")["total_count"],
+        "issues": search(f"author:{USER} is:issue -user:{USER}")["total_count"],
+        "recent": recent_merged(),
+        "contrib_total": total,
+        "weeks": weeks,
+        "rev": dt.date.today().strftime("%Y.%m.%d"),
     }
 
 
-# ---------------------------------------------------------------- shared pieces
+# ------------------------------------------------------------------ pieces
 
-def defs(t, uid):
-    return f"""
-  <defs>
-    <linearGradient id="grad{uid}" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="{t['a1']}"/><stop offset=".5" stop-color="{t['a2']}"/><stop offset="1" stop-color="{t['a3']}"/>
-    </linearGradient>
-    <filter id="blur{uid}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="55"/></filter>
-    <pattern id="grid{uid}" width="28" height="28" patternUnits="userSpaceOnUse">
-      <path d="M28 0H0V28" fill="none" stroke="{t['text']}" stroke-opacity="{t['grid']}" stroke-width="1"/>
-    </pattern>
-    <clipPath id="clip{uid}"><rect width="100%" height="100%" rx="22"/></clipPath>
-  </defs>"""
+def b64(path):
+    with open(os.path.join(VENDOR, path), "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
 
-def orbs(t, uid, w, h):
-    return f"""
-  <g filter="url(#blur{uid})" opacity="{t['orb']}">
-    <circle cx="{w*0.18}" cy="{h*0.35}" r="{h*0.42}" fill="{t['a1']}">
-      <animate attributeName="cx" values="{w*0.18};{w*0.32};{w*0.18}" dur="14s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="{w*0.62}" cy="{h*0.75}" r="{h*0.40}" fill="{t['a2']}">
-      <animate attributeName="cy" values="{h*0.75};{h*0.35};{h*0.75}" dur="11s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="{w*0.88}" cy="{h*0.25}" r="{h*0.34}" fill="{t['a3']}">
-      <animate attributeName="cx" values="{w*0.88};{w*0.74};{w*0.88}" dur="16s" repeatCount="indefinite"/>
-    </circle>
-  </g>"""
+FACES = {
+    "bsd800": ("BSD", 800, "bsd-800.woff"),
+    "bsd400": ("BSD", 400, "bsd-400.woff"),
+    "plx400": ("PLX", 400, "plex-400.woff"),
+    "plx600": ("PLX", 600, "plex-600.woff"),
+}
 
 
-def svg(w, h, body, label):
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-            f'role="img" aria-label="{escape(label)}">{body}\n</svg>\n')
+def fonts(*keys):
+    css = "".join(
+        "@font-face{font-family:'%s';font-weight:%d;src:url(data:font/woff;base64,%s) format('woff')}" % (
+            FACES[k][0], FACES[k][1], b64(FACES[k][2])) for k in keys)
+    return f"<style>{css}</style>"
 
 
-# ---------------------------------------------------------------- hero
-
-def hero(t, d):
-    w, h, u = 1000, 330, "h"
-    chips = ["Go", "Kubernetes", "eBPF", "CEL", "Rego", "Policy engines"]
-    x, chip_svg = 70, []
-    for i, c in enumerate(chips):
-        cw = 22 + 9 * len(c)
-        chip_svg.append(
-            f'<g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="{1.6 + i*0.15:.2f}s" dur=".5s" fill="freeze"/>'
-            f'<rect x="{x}" y="232" width="{cw}" height="30" rx="15" fill="{t["panel2"]}" fill-opacity=".75" stroke="{t["stroke"]}"/>'
-            f'<text x="{x + cw/2}" y="252" text-anchor="middle" font-family="{MONO}" font-size="13" fill="{t["muted"]}">{c}</text></g>')
-        x += cw + 10
-    body = defs(t, u) + f"""
-  <g clip-path="url(#clip{u})">
-    <rect width="{w}" height="{h}" fill="{t['bg']}"/>
-    {orbs(t, u, w, h)}
-    <rect width="{w}" height="{h}" fill="url(#grid{u})"/>
-    <rect x="40" y="34" width="{w-80}" height="{h-68}" rx="18" fill="{t['panel']}" fill-opacity=".55" stroke="{t['stroke']}"/>
-    <circle cx="66" cy="58" r="5.5" fill="#ff5f57"/><circle cx="84" cy="58" r="5.5" fill="#febc2e"/><circle cx="102" cy="58" r="5.5" fill="#28c840"/>
-    <text x="{w-66}" y="63" text-anchor="end" font-family="{MONO}" font-size="12" fill="{t['dim']}">~/itsvishalyadav</text>
-    <text x="70" y="112" font-family="{MONO}" font-size="15" fill="{t['muted']}"><tspan fill="{t['ok']}">❯</tspan> whoami</text>
-    <rect x="146" y="99" width="8" height="16" fill="{t['a1']}"><animate attributeName="opacity" values="1;0;1" dur="1.1s" repeatCount="indefinite"/></rect>
-    <text x="{w-70}" y="112" text-anchor="end" font-family="{MONO}" font-size="12.5" fill="{t['muted']}">B.Tech CSE · ABV-IIITM Gwalior  ·  <tspan fill="{t['a2']}">SWE Intern @ Google '27</tspan></text>
-    <text x="68" y="172" font-family="{SANS}" font-size="56" font-weight="800" letter-spacing="-1.5" fill="url(#grad{u})">Vishal Yadav</text>
-    <text x="70" y="208" font-family="{SANS}" font-size="19" fill="{t['text']}" opacity="0">Systems engineer working on Kubernetes security
-      <animate attributeName="opacity" from="0" to="1" begin=".7s" dur=".8s" fill="freeze"/></text>
-    {''.join(chip_svg)}
-  </g>"""
-    return svg(w, h, body, "Vishal Yadav, systems engineer working on Kubernetes security")
+def logo(name, x, y, size):
+    return (f'<image x="{x}" y="{y}" width="{size}" height="{size}" '
+            f'href="data:image/svg+xml;base64,{b64(name)}"/>')
 
 
-# ---------------------------------------------------------------- neofetch
-
-ART = r"""
-           .::::::::::.
-       .:::'          ':::.
-     .::'    .::::::.    '::.
-    ::'    .:'  /\  ':.    '::
-   ::     ::   /  \   ::     ::
-  ::     ::---/----\---::     ::
-  ::     ::  /  ()  \  ::     ::
-  ::     ::--\------/--::     ::
-   ::     ::  \    /  ::     ::
-    ::.    ':. \  / .:'    .::
-     '::.    '::\/::'    .::'
-       ':::.          .:::'
-           '::::::::::'
-""".strip("\n").split("\n")
+def hazard(t, y, h, uid):
+    return (f'<defs><pattern id="hz{uid}" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+            f'<rect width="22" height="22" fill="{t["on_amber"]}"/><rect width="11" height="22" fill="{t["amber"]}"/></pattern></defs>'
+            f'<rect x="0" y="{y}" width="{W}" height="{h}" fill="url(#hz{uid})"/>')
 
 
-def neofetch(t, d):
-    w, u = 1000, "n"
+def crop_marks(t, w, h, inset=14, size=14):
+    c = t["muted"]
+    p = []
+    for (x, y, dx, dy) in [(inset, inset, 1, 1), (w - inset, inset, -1, 1), (inset, h - inset, 1, -1), (w - inset, h - inset, -1, -1)]:
+        p.append(f'M{x} {y + dy*size}V{y}H{x + dx*size}')
+    return f'<path d="{" ".join(p)}" fill="none" stroke="{c}" stroke-width="1"/>'
+
+
+def label(t, x, y, text, anchor="start", color=None, size=11.5):
+    return (f'<text x="{x}" y="{y}" text-anchor="{anchor}" font-family="{MONO}" font-weight="600" font-size="{size}" '
+            f'letter-spacing="1.6" fill="{color or t["muted"]}">{escape(text)}</text>')
+
+
+def svg(h, body, aria):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{h}" viewBox="0 0 {W} {h}" role="img" '
+            f'aria-label="{escape(aria)}">{body}</svg>\n')
+
+
+# ------------------------------------------------------------------ panels
+
+def masthead(t, d):
+    h = 452
     rows = [
-        ("title", "vishal@github"),
-        ("rule", ""),
-        ("OS", "Kubernetes · Linux"),
-        ("Host", "ABV-IIITM Gwalior · B.Tech CSE"),
-        ("Kernel", "Go"),
-        ("Uptime", f"{d['uptime']} on GitHub"),
-        ("Next", "SWE Intern @ Google (Summer '27)"),
-        ("Shell", "admission control · runtime detection"),
-        ("Policy", "Rego · CEL · ValidatingAdmissionPolicy"),
-        ("gap", ""),
-        ("— Open source", ""),
-        ("Kubescape", f"{d['ks']} merged PRs · {d['ks_repos']} repos"),
-        ("Kyverno", f"{d['kv']} merged PRs"),
-        ("Merged total", f"{d['oss']} PRs to others' repos"),
-        ("Bugs filed", f"{d['issues']} issues"),
+        ("BASE", "ABV-IIITM Gwalior · B.Tech CSE"),
+        ("NEXT", "Google · SWE intern · summer 2027"),
+        ("WORKS ON", "admission control · runtime detection"),
+        ("LANGUAGES", "Go · C++ · Python · TypeScript"),
     ]
-    art = "".join(
-        f'<tspan x="70" dy="{0 if i == 0 else 21}">{escape(line)}</tspan>' for i, line in enumerate(ART))
-    lines, y = [], 104
-    for i, (k, v) in enumerate(rows):
-        begin = f"{0.25 + i*0.11:.2f}s"
-        fade = f'<animate attributeName="opacity" from="0" to="1" begin="{begin}" dur=".35s" fill="freeze"/>'
-        if k == "title":
-            body = f'<tspan fill="{t["a1"]}" font-weight="700">vishal</tspan><tspan fill="{t["muted"]}">@</tspan><tspan fill="{t["a2"]}" font-weight="700">github</tspan>'
-        elif k == "rule":
-            body = f'<tspan fill="{t["dim"]}">{"─" * 30}</tspan>'
-        elif k == "gap":
-            y += 8
-            continue
-        elif k.startswith("—"):
-            body = f'<tspan fill="{t["a3"]}" font-weight="700">{escape(k)}</tspan> <tspan fill="{t["dim"]}">{"─" * 16}</tspan>'
-        else:
-            dots = "." * max(2, 14 - len(k))
-            body = (f'<tspan fill="{t["a2"]}">{escape(k)}</tspan><tspan fill="{t["dim"]}"> {dots} </tspan>'
-                    f'<tspan fill="{t["text"]}">{escape(v)}</tspan>')
-        lines.append(f'<text x="470" y="{y}" font-family="{MONO}" font-size="15" opacity="0">{body}{fade}</text>')
-        y += 22
-    palette = "".join(
-        f'<rect x="{470 + i*34}" y="{y + 6}" width="28" height="14" rx="3" fill="{c}"/>'
-        for i, c in enumerate([t["a1"], t["a2"], t["a3"], t["ok"], "#fbbf24", t["muted"]]))
-    h = y + 80
-    body = defs(t, u) + f"""
-  <g clip-path="url(#clip{u})">
-    <rect width="{w}" height="{h}" fill="{t['bg']}"/>
-    {orbs(t, u, w, h)}
-    <rect x="30" y="28" width="{w-60}" height="{h-56}" rx="18" fill="{t['panel']}" fill-opacity=".72" stroke="{t['stroke']}"/>
-    <circle cx="56" cy="52" r="5.5" fill="#ff5f57"/><circle cx="74" cy="52" r="5.5" fill="#febc2e"/><circle cx="92" cy="52" r="5.5" fill="#28c840"/>
-    <text x="{w/2}" y="57" text-anchor="middle" font-family="{MONO}" font-size="12" fill="{t['dim']}">neofetch — updated {d['updated']}</text>
-    <text x="70" y="104" font-family="{MONO}" font-size="15" fill="url(#grad{u})" xml:space="preserve">{art}</text>
-    {''.join(lines)}
-    {palette}
-    <rect x="682" y="{y + 5}" width="9" height="17" fill="{t['a1']}">
-      <animate attributeName="opacity" values="1;0;1" dur="1.1s" repeatCount="indefinite"/></rect>
-  </g>"""
-    return svg(w, h, body, "neofetch-style card: system and open-source stats")
+    spec, y = [], 286
+    for k, v in rows:
+        spec.append(label(t, 560, y, k))
+        spec.append(f'<text x="672" y="{y}" font-family="{MONO}" font-size="14" fill="{t["ink"]}">{escape(v)}</text>')
+        spec.append(f'<line x1="560" y1="{y + 13}" x2="960" y2="{y + 13}" stroke="{t["rule"]}"/>')
+        y += 32
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{crop_marks(t, W, h - 30)}
+{label(t, 40, 52, "ITSVISHALYADAV / PROFILE")}
+{label(t, 960, 52, "REV. " + d['rev'], anchor="end")}
+<line x1="40" y1="66" x2="960" y2="66" stroke="{t['ink']}" stroke-width="2"/>
+<text x="34" y="236" font-family="{DISPLAY}" font-weight="800" font-size="196" letter-spacing="-2" fill="{t['ink']}">VISHAL</text>
+<text x="34" y="400" font-family="{DISPLAY}" font-weight="800" font-size="196" letter-spacing="-2" fill="none" stroke="{t['ink']}" stroke-width="2.2">YADAV</text>
+<rect x="560" y="96" width="400" height="150" fill="{t['amber']}"/>
+<text x="578" y="122" font-family="{MONO}" font-weight="600" font-size="11.5" letter-spacing="1.6" fill="{t['on_amber']}">ROLE</text>
+<text x="576" y="180" font-family="{DISPLAY}" font-weight="800" font-size="46" fill="{t['on_amber']}">SYSTEMS ENGINEER</text>
+<text x="576" y="228" font-family="{DISPLAY}" font-weight="800" font-size="46" fill="{t['on_amber']}">KUBERNETES SECURITY</text>
+{''.join(spec)}
+{hazard(t, h - 30, 30, "m")}"""
+    return svg(h, body, "Vishal Yadav, systems engineer, Kubernetes security")
 
 
-# ---------------------------------------------------------------- fix cards
+def ledger(t, d):
+    h = 300
+    cols = [
+        (40, 420, "kubescape-icon-color.svg", "KUBESCAPE · CNCF", str(d["ks"]), t["num"], f"merged pull requests across {d['ks_repos']} repositories"),
+        (440, 720, "kyverno-icon-color.svg", "KYVERNO · CNCF", str(d["kv"]), t["ink"], "merged pull requests"),
+        (740, 960, None, "BUG REPORTS", str(d["issues"]), t["green"], "issues filed"),
+    ]
+    parts = []
+    for x0, x1, lg, lab, num, color, cap in cols:
+        lx = x0
+        if lg:
+            parts.append(logo(lg, x0, 96, 30))
+            lx = x0 + 42
+        parts.append(label(t, lx, 116, lab, color=t["ink"]))
+        parts.append(f'<text x="{x0 - 6}" y="240" font-family="{DISPLAY}" font-weight="800" font-size="150" fill="{color}">{num}</text>')
+        parts.append(f'<text x="{x0}" y="272" font-family="{MONO}" font-size="13.5" fill="{t["muted"]}">{escape(cap)}</text>')
+        if x1 < 960:
+            parts.append(f'<line x1="{x1}" y1="92" x2="{x1}" y2="276" stroke="{t["rule"]}"/>')
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{label(t, 40, 44, "OPEN SOURCE")}
+{label(t, 960, 44, "LIVE COUNT · UPDATED DAILY", anchor="end")}
+<line x1="40" y1="58" x2="960" y2="58" stroke="{t['ink']}" stroke-width="2"/>
+{''.join(parts)}"""
+    return svg(h, body, f"{d['ks']} merged Kubescape PRs, {d['kv']} merged Kyverno PRs, {d['issues']} issues filed")
 
-FIXES = [
-    ("kubescape/storage", "#528", "Mid-path wildcards kept as written",
-     "Profiles were widened on every save, so file-access alerts went quiet."),
-    ("kubescape/node-agent", "#1175", "Argv boundaries in the CEL cache key",
-     "Two different command lines shared one cached verdict for R0040."),
-    ("kubescape/operator", "#583", "Legacy AppArmor annotation blocked",
-     "A remediation patch could still flip a workload to unconfined."),
-    ("kubescape/operator", "#598", "Admin cordons survive a revert",
-     "Undoing a remediation no longer reopens a node under maintenance."),
+
+def ticker(t, d):
+    h = 58
+    items = "     ▸     ".join(f"{r}  {title}" for r, title in d["recent"]) + "     ▸     "
+    cw = 0.6 * 15  # IBM Plex Mono advance width at 15px
+    run = len(items) * cw
+    body = fonts("plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+<line x1="0" y1="0.5" x2="{W}" y2="0.5" stroke="{t['rule']}"/><line x1="0" y1="{h-0.5}" x2="{W}" y2="{h-0.5}" stroke="{t['rule']}"/>
+<g>
+  <animateTransform attributeName="transform" type="translate" from="0 0" to="{-run:.1f} 0" dur="{run/38:.0f}s" repeatCount="indefinite"/>
+  <text x="196" y="35" font-family="{MONO}" font-size="15" fill="{t['ink']}" xml:space="preserve">{escape(items)}{escape(items)}</text>
+</g>
+<rect x="0" y="0" width="176" height="{h}" fill="{t['amber']}"/>
+<text x="20" y="35" font-family="{MONO}" font-weight="600" font-size="13" letter-spacing="1.8" fill="{t['on_amber']}">JUST MERGED</text>
+<rect x="148" y="24" width="9" height="9" fill="{t['on_amber']}"><animate attributeName="opacity" values="1;0.15;1" dur="1.6s" repeatCount="indefinite"/></rect>"""
+    return svg(h, body, "Recently merged pull requests")
+
+
+WORK = [
+    ("kubescape/storage", "528", "Mid-path wildcards kept as written",
+     "Saved profiles were silently widened, so file-access alerts went quiet."),
+    ("kubescape/node-agent", "1175", "Argv boundaries in the CEL cache key",
+     "Two different command lines shared one cached verdict, letting R0040 be bypassed."),
+    ("kubescape/operator", "583", "Legacy AppArmor annotation blocked",
+     "A remediation patch could still switch a workload to unconfined."),
+    ("kubescape/storage", "533", "Network peers no longer merged by mistake",
+     "Hand-written profiles lost allowed IPs, DNS names and pod selectors on save."),
 ]
 
 
-def fix_card(t, repo, num, title, why, i):
-    w, h, u = 480, 150, f"f{i}"
-    return svg(w, h, defs(t, u) + f"""
-  <g clip-path="url(#clip{u})">
-    <rect width="{w}" height="{h}" fill="{t['panel']}"/>
-    <circle cx="{w-10}" cy="-10" r="120" fill="url(#grad{u})" opacity=".09"/>
-    <rect x=".5" y=".5" width="{w-1}" height="{h-1}" rx="22" fill="none" stroke="{t['stroke']}"/>
-    <rect x="24" y="24" width="4" height="22" rx="2" fill="url(#grad{u})"/>
-    <text x="38" y="41" font-family="{MONO}" font-size="13" fill="{t['muted']}">{escape(repo)} <tspan fill="{t['a1']}">{escape(num)}</tspan></text>
-    <text x="24" y="80" font-family="{SANS}" font-size="19" font-weight="700" fill="{t['text']}">{escape(title)}</text>
-    <text x="24" y="110" font-family="{SANS}" font-size="13.5" fill="{t['muted']}">{escape(why)}</text>
-    <text x="{w-24}" y="{h-20}" text-anchor="end" font-family="{MONO}" font-size="12" fill="{t['ok']}">● merged</text>
-  </g>""", f"{repo}{num}: {title}")
+def work_row(t, repo, num, title, why, last):
+    h = 104
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{label(t, 40, 34, repo.upper())}
+<text x="36" y="84" font-family="{DISPLAY}" font-weight="800" font-size="52" fill="{t['num']}">#{num}</text>
+<text x="300" y="50" font-family="{DISPLAY}" font-weight="800" font-size="34" fill="{t['ink']}">{escape(title)}</text>
+<text x="300" y="80" font-family="{MONO}" font-size="13.5" fill="{t['muted']}">{escape(why)}</text>
+<rect x="890" y="25" width="8" height="8" fill="{t['green']}"/>
+{label(t, 960, 34, "MERGED", anchor="end", color=t['green'])}
+<line x1="40" y1="{h - 1}" x2="960" y2="{h - 1}" stroke="{t['ink'] if last else t['rule']}" stroke-width="{2 if last else 1}"/>"""
+    return svg(h, body, f"{repo}#{num}: {title}")
 
 
-# ---------------------------------------------------------------- divider
+def heatmap(t, d):
+    weeks = d["weeks"][-53:]
+    cell, gap, x0, y0 = 13, 4, 84, 96
+    h = y0 + 7 * (cell + gap) + 44
+    counts = sorted(c for w in weeks for _, c in w if c > 0)
+    q = [counts[int(len(counts) * f)] if counts else 1 for f in (0.25, 0.5, 0.9)]
 
-def divider(t, label):
-    w, h, u = 1000, 60, "d" + label[:3]
-    return svg(w, h, defs(t, u) + f"""
-  <line x1="0" y1="30" x2="{w}" y2="30" stroke="url(#grad{u})" stroke-opacity=".35"/>
-  <rect x="{w/2 - (11*len(label) + 56)/2}" y="12" width="{11*len(label) + 56}" height="36" rx="18" fill="{t['bg']}" stroke="{t['stroke']}"/>
-  <text x="{w/2}" y="36" text-anchor="middle" font-family="{MONO}" font-size="15" letter-spacing="2" fill="url(#grad{u})">{escape(label)}</text>""",
-               label)
+    def level(c):
+        if c == 0:
+            return 0
+        return 1 + sum(c > v for v in q)
+
+    cells, months, last_month = [], [], None
+    for wi, week in enumerate(weeks):
+        for date, c in week:
+            di = dt.date.fromisoformat(date).weekday()  # Mon=0
+            row = (di + 1) % 7  # Sunday first, like GitHub
+            x, y = x0 + wi * (cell + gap), y0 + row * (cell + gap)
+            cells.append(f'<rect x="{x}" y="{y}" width="{cell}" height="{cell}" fill="{t["heat"][level(c)]}"><title>{date}: {c}</title></rect>')
+        m = dt.date.fromisoformat(week[0][0]).strftime("%b").upper()
+        if m != last_month and wi < len(weeks) - 2:
+            months.append(f'<text x="{x0 + wi * (cell + gap)}" y="{y0 - 12}" font-family="{MONO}" font-size="10.5" fill="{t["muted"]}">{m}</text>')
+            last_month = m
+    days = "".join(f'<text x="{x0 - 12}" y="{y0 + r * (cell + gap) + 10}" text-anchor="end" font-family="{MONO}" font-size="10.5" fill="{t["muted"]}">{n}</text>'
+                   for r, n in ((1, "MON"), (3, "WED"), (5, "FRI")))
+    legend = "".join(f'<rect x="{860 + i*(cell+3)}" y="{h - 26}" width="{cell}" height="{cell}" fill="{c}"/>' for i, c in enumerate(t["heat"]))
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{label(t, 40, 44, "CONTRIBUTIONS · LAST 12 MONTHS")}
+<text x="960" y="50" text-anchor="end" font-family="{DISPLAY}" font-weight="800" font-size="42" fill="{t['num']}">{d['contrib_total']:,}</text>
+<line x1="40" y1="58" x2="960" y2="58" stroke="{t['ink']}" stroke-width="2"/>
+{''.join(months)}{days}{''.join(cells)}
+<text x="852" y="{h - 15}" text-anchor="end" font-family="{MONO}" font-size="10.5" fill="{t['muted']}">LESS</text>{legend}
+<text x="{860 + 5*(cell+3) + 4}" y="{h - 15}" font-family="{MONO}" font-size="10.5" fill="{t['muted']}">MORE</text>"""
+    return svg(h, body, f"{d['contrib_total']} contributions in the last year")
+
+
+def section(t, left, right):
+    h = 72
+    body = fonts("plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{label(t, 40, 52, left)}
+{label(t, 960, 52, right, anchor="end")}
+<line x1="40" y1="{h - 6}" x2="960" y2="{h - 6}" stroke="{t['ink']}" stroke-width="2"/>"""
+    return svg(h, body, left)
+
+
+def footer(t, d):
+    h = 64
+    body = fonts("plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{hazard(t, 0, 12, "f")}
+<text x="40" y="44" font-family="{MONO}" font-size="12" fill="{t['muted']}">Panels drawn by scripts/build_profile.py from the GitHub API · refreshed daily</text>
+{label(t, 960, 44, "END OF SHEET", anchor="end")}"""
+    return svg(h, body, "footer")
 
 
 def main():
     os.makedirs(OUT, exist_ok=True)
     d = gather()
     for name, t in THEMES.items():
-        files = {f"hero-{name}.svg": hero(t, d), f"neofetch-{name}.svg": neofetch(t, d)}
-        for i, f in enumerate(FIXES):
-            files[f"fix{i+1}-{name}.svg"] = fix_card(t, *f, i)
-        for label in ("OPEN SOURCE", "STACK", "ACTIVITY"):
-            files[f"div-{label.split()[0].lower()}-{name}.svg"] = divider(t, label)
+        files = {
+            f"masthead-{name}.svg": masthead(t, d),
+            f"ledger-{name}.svg": ledger(t, d),
+            f"ticker-{name}.svg": ticker(t, d),
+            f"footer-{name}.svg": footer(t, d),
+            f"section-work-{name}.svg": section(t, "SELECTED WORK", "KUBERNETES SECURITY · GO"),
+        }
+        if d["weeks"]:
+            files[f"heatmap-{name}.svg"] = heatmap(t, d)
+        for i, w in enumerate(WORK):
+            files[f"work{i+1}-{name}.svg"] = work_row(t, *w, last=(i == len(WORK) - 1))
         for fn, content in files.items():
             with open(os.path.join(OUT, fn), "w", encoding="utf-8", newline="\n") as f:
                 f.write(content)
-    print(json.dumps(d))
+    print(json.dumps({k: v for k, v in d.items() if k not in ("weeks",)}, indent=1))
 
 
 if __name__ == "__main__":
