@@ -62,15 +62,17 @@ def search(q, per_page=1, sort=None):
     return _req(url)
 
 
-def repos_touched(q):
-    names, page = set(), 1
+def repo_counts(q):
+    counts, page = {}, 1
     while page <= 10:
         items = _req("https://api.github.com/search/issues?per_page=100&page=%d&q=%s" % (page, urllib.parse.quote(q)))["items"]
-        names.update(i["repository_url"].rsplit("/", 1)[1] for i in items)
+        for i in items:
+            r = i["repository_url"].rsplit("/", 1)[1]
+            counts[r] = counts.get(r, 0) + 1
         if len(items) < 100:
             break
         page += 1
-    return len(names)
+    return sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
 
 
 def clean_title(t):
@@ -104,9 +106,9 @@ def gather():
     except Exception as e:  # keep the last heatmap if the calendar can't be read
         print("calendar unavailable:", e)
         total, weeks = None, None
-    return {
+    d = {
         "ks": search(ks_q)["total_count"],
-        "ks_repos": repos_touched(ks_q),
+        "ks_by_repo": repo_counts(ks_q),
         "kv": search(f"author:{USER} org:kyverno is:pr is:merged")["total_count"],
         "issues": search(f"author:{USER} is:issue -user:{USER}")["total_count"],
         "recent": recent_merged(),
@@ -114,6 +116,8 @@ def gather():
         "weeks": weeks,
         "rev": dt.date.today().strftime("%Y.%m.%d"),
     }
+    d["ks_repos"] = len(d["ks_by_repo"])
+    return d
 
 
 # ------------------------------------------------------------------ pieces
@@ -308,6 +312,169 @@ def heatmap(t, d):
     return svg(h, body, f"{d['contrib_total']} contributions in the last year")
 
 
+def about(t, d):
+    h = 330
+    quote = ["I find logic bugs in", "Kubernetes security tools,", "prove them with a failing", "test, and fix them."]
+    para = [
+        "Most of my work is in Go: admission",
+        "controllers, policy engines, runtime",
+        "detection rules and the storage that",
+        "holds learned behaviour. I check the",
+        "code against the spec or a sibling",
+        "path, write the failing test first,",
+        "then the smallest fix, and show the",
+        "before/after in every pull request.",
+    ]
+    q = "".join(f'<text x="40" y="{118 + i*42}" font-family="{DISPLAY}" font-weight="800" font-size="40" fill="{t["ink"]}">{escape(l)}</text>' for i, l in enumerate(quote))
+    p = "".join(f'<text x="640" y="{104 + i*22}" font-family="{MONO}" font-size="13" fill="{t["muted"]}">{escape(l)}</text>' for i, l in enumerate(para))
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{label(t, 40, 44, "ABOUT")}
+{label(t, 960, 44, "SYSTEMS · SECURITY · OPEN SOURCE", anchor="end")}
+<line x1="40" y1="58" x2="960" y2="58" stroke="{t['ink']}" stroke-width="2"/>
+<rect x="40" y="82" width="8" height="166" fill="{t['amber']}"/>
+<g transform="translate(26 0)">{q}</g>
+<line x1="612" y1="86" x2="612" y2="262" stroke="{t['rule']}"/>
+{p}
+<text x="66" y="300" font-family="{MONO}" font-weight="600" font-size="12.5" letter-spacing="1.4" fill="{t['green']}">● OPEN TO SECURITY &amp; INFRASTRUCTURE WORK · CNCF MENTORSHIPS</text>"""
+    return svg(h, body, "About: finds and fixes logic bugs in Kubernetes security tools")
+
+
+def repo_bars(t, d):
+    rows = d["ks_by_repo"][:8]
+    top = rows[0][1] if rows else 1
+    h = 92 + len(rows) * 34 + 26
+    bars = []
+    for i, (repo, n) in enumerate(rows):
+        y = 96 + i * 34
+        w = max(6, 560 * n / top)
+        bars.append(f'<text x="40" y="{y + 15}" font-family="{MONO}" font-size="13.5" fill="{t["ink"]}">{escape(repo)}</text>')
+        bars.append(f'<rect x="290" y="{y}" width="{w:.0f}" height="20" fill="{t["amber"] if i == 0 else t["green"]}"/>')
+        bars.append(f'<text x="{290 + w + 12:.0f}" y="{y + 16}" font-family="{DISPLAY}" font-weight="800" font-size="22" fill="{t["ink"]}">{n}</text>')
+    rest = sum(n for _, n in d["ks_by_repo"][8:])
+    more = f"+ {rest} more across {len(d['ks_by_repo']) - 8} other repositories" if rest else ""
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{label(t, 40, 44, "KUBESCAPE · WHERE THE MERGED PRS LANDED")}
+{label(t, 960, 44, "LIVE · BY REPOSITORY", anchor="end")}
+<line x1="40" y1="58" x2="960" y2="58" stroke="{t['ink']}" stroke-width="2"/>
+{''.join(bars)}
+<text x="40" y="{h - 18}" font-family="{MONO}" font-size="12.5" fill="{t['muted']}">{escape(more)}</text>"""
+    return svg(h, body, "Merged Kubescape pull requests by repository")
+
+
+KYVERNO = [
+    ("17189", "CVE-2026-56853", "Bumped Go to 1.26.6 to fix an HTTP/2 timeout bypass in the standard library"),
+    ("17156", "CVE-2026-56853", "Bumped golang.org/x/net for the same HTTP/2 ReadHeaderTimeout evasion"),
+    ("17215", "CVE-2026-46600", "Bumped miekg/dns to fix a DNS parsing panic"),
+    ("16782", "CEL", "Bumped cel-go to v0.30.0 to resolve a published advisory"),
+    ("16910", "ENGINE", "Context propagation in MatchPolicyContext"),
+    ("17116", "TRACING", "OpenTelemetry spans for APICalls without a custom CA bundle"),
+    ("17024", "LEAKS", "Goroutine and ticker leaks in metrics, TTL and policy controllers"),
+]
+
+
+def kyverno(t, d):
+    h = 92 + len(KYVERNO) * 36 + 20
+    rows = []
+    for i, (num, tag, text) in enumerate(KYVERNO):
+        y = 100 + i * 36
+        rows.append(f'<text x="40" y="{y + 6}" font-family="{DISPLAY}" font-weight="800" font-size="24" fill="{t["num"]}">#{num}</text>')
+        rows.append(f'<rect x="150" y="{y - 11}" width="{14 + 8.4*len(tag):.0f}" height="22" fill="none" stroke="{t["muted"]}"/>')
+        rows.append(f'<text x="157" y="{y + 4}" font-family="{MONO}" font-weight="600" font-size="11.5" letter-spacing="1" fill="{t["ink"]}">{escape(tag)}</text>')
+        rows.append(f'<text x="330" y="{y + 5}" font-family="{MONO}" font-size="13.5" fill="{t["ink"]}">{escape(text)}</text>')
+        rows.append(f'<line x1="40" y1="{y + 20}" x2="960" y2="{y + 20}" stroke="{t["rule"]}"/>')
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{logo("kyverno-icon-color.svg", 40, 22, 28)}
+{label(t, 78, 44, f"KYVERNO · {d['kv']} MERGED · SECURITY AND RELIABILITY FIXES", color=t['ink'])}
+{label(t, 960, 44, "SINCE JUL 2026", anchor="end")}
+<line x1="40" y1="58" x2="960" y2="58" stroke="{t['ink']}" stroke-width="2"/>
+{''.join(rows)}"""
+    return svg(h, body, "Kyverno security and reliability fixes")
+
+
+TIMELINE = [
+    ("MAY 2025", "GitHub", "first web projects"),
+    ("2025", "Web3", "Solidity contracts"),
+    ("JUN 2026", "InterVue", "AI interview platform"),
+    ("JUL 2026", "Kyverno", "CVE and leak fixes"),
+    ("NOV 2026", "Kubescape", "{ks} PRs merged"),
+    ("SUMMER 2027", "Google", "SWE intern"),
+]
+
+
+def timeline(t, d):
+    h = 250
+    n = len(TIMELINE)
+    x0, x1, y = 110, 890, 132
+    step = (x1 - x0) / (n - 1)
+    parts = [f'<line x1="{x0}" y1="{y}" x2="{x1}" y2="{y}" stroke="{t["ink"]}" stroke-width="2"/>']
+    for i, (when, what, note) in enumerate(TIMELINE):
+        x = x0 + i * step
+        last = i == n - 1
+        anchor = "middle"
+        parts.append(f'<rect x="{x - 7}" y="{y - 7}" width="14" height="14" fill="{t["amber"] if last else t["bg"]}" stroke="{t["ink"]}" stroke-width="2"/>')
+        parts.append(f'<text x="{x}" y="{y - 24}" text-anchor="{anchor}" font-family="{MONO}" font-weight="600" font-size="11.5" letter-spacing="1.4" fill="{t["muted"]}">{escape(when)}</text>')
+        parts.append(f'<text x="{x}" y="{y + 44}" text-anchor="{anchor}" font-family="{DISPLAY}" font-weight="800" font-size="30" fill="{t["ink"]}">{escape(what)}</text>')
+        parts.append(f'<text x="{x}" y="{y + 68}" text-anchor="{anchor}" font-family="{MONO}" font-size="12" fill="{t["muted"]}">{escape(note.format(ks=d["ks"]))}</text>')
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{label(t, 40, 44, "TIMELINE")}
+<line x1="40" y1="58" x2="960" y2="58" stroke="{t['ink']}" stroke-width="2"/>
+{''.join(parts)}"""
+    return svg(h, body, "Timeline from 2025 to 2027")
+
+
+PROJECTS = [
+    ("InterVue", "JAVASCRIPT · AI", ["AI mock interviews with voice,", "proctoring, a code sandbox and", "ATS resume scoring."]),
+    ("GetMySeat", "JAVASCRIPT · FULL STACK", ["Movie booking with real-time", "seat selection and Razorpay", "payments."]),
+    ("AI Decision Auditor", "PYTHON · TRUSTWORTHY AI", ["Audits AI decisions for fairness,", "explainability, robustness and", "accountability."]),
+    ("Foundry FundMe", "SOLIDITY · FOUNDRY", ["ETH crowdfunding contract with a", "USD minimum via Chainlink price", "feeds; fully tested with Foundry."]),
+]
+
+
+def project_tile(t, name, tag, lines, i):
+    w, h = 490, 176
+    body = fonts("bsd800", "plx400", "plx600") + f"""
+<rect width="{w}" height="{h}" fill="{t['bg']}"/>
+<rect x="1" y="1" width="{w - 2}" height="{h - 2}" fill="none" stroke="{t['rule']}" stroke-width="2"/>
+<rect x="1" y="1" width="{w - 2}" height="8" fill="{t['amber'] if i == 0 else t['ink']}"/>
+<text x="24" y="44" font-family="{MONO}" font-weight="600" font-size="11.5" letter-spacing="1.4" fill="{t['muted']}">{escape(tag)}</text>
+<text x="22" y="84" font-family="{DISPLAY}" font-weight="800" font-size="38" fill="{t['ink']}">{escape(name)}</text>
+{''.join(f'<text x="24" y="{112 + j*20}" font-family="{MONO}" font-size="13" fill="{t["muted"]}">{escape(l)}</text>' for j, l in enumerate(lines))}
+<text x="{w - 24}" y="44" text-anchor="end" font-family="{MONO}" font-weight="600" font-size="13" fill="{t['ink']}">↗</text>"""
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img" '
+            f'aria-label="{escape(name)}">{body}</svg>\n')
+
+
+TOOLBOX = [
+    ("LANGUAGES", ["Go", "C++", "Python", "TypeScript", "JavaScript", "Solidity"]),
+    ("CLOUD NATIVE", ["Kubernetes", "Helm", "Docker", "eBPF", "OPA / Rego", "CEL"]),
+    ("SECURITY", ["Admission control", "Runtime rules", "SBOM / VEX", "CVE triage", "Supply chain"]),
+    ("BACKEND & WEB", ["Node.js", "Express", "MongoDB", "MySQL", "React", "Tailwind"]),
+    ("TOOLING", ["Git", "GitHub Actions", "Linux", "Bash", "pytest", "Foundry"]),
+]
+
+
+def toolbox(t, d):
+    h = 300
+    colw = 920 / len(TOOLBOX)
+    parts = []
+    for c, (head, items) in enumerate(TOOLBOX):
+        x = 40 + c * colw
+        parts.append(f'<rect x="{x:.0f}" y="84" width="{colw - 16:.0f}" height="30" fill="{t["amber"] if c == 1 else t["ink"]}"/>')
+        parts.append(f'<text x="{x + 12:.0f}" y="104" font-family="{MONO}" font-weight="600" font-size="11.5" letter-spacing="1.4" fill="{t["on_amber"] if c == 1 else t["bg"]}">{escape(head)}</text>')
+        for j, it in enumerate(items):
+            parts.append(f'<text x="{x + 2:.0f}" y="{142 + j*24}" font-family="{MONO}" font-size="14" fill="{t["ink"]}">{escape(it)}</text>')
+    body = fonts("plx400", "plx600") + f"""
+<rect width="{W}" height="{h}" fill="{t['bg']}"/>
+{label(t, 40, 44, "TOOLBOX")}
+<line x1="40" y1="58" x2="960" y2="58" stroke="{t['ink']}" stroke-width="2"/>
+{''.join(parts)}"""
+    return svg(h, body, "Toolbox")
+
+
 def section(t, left, right):
     h = 72
     body = fonts("plx600") + f"""
@@ -338,7 +505,15 @@ def main():
             f"ticker-{name}.svg": ticker(t, d),
             f"footer-{name}.svg": footer(t, d),
             f"section-work-{name}.svg": section(t, "SELECTED WORK", "KUBERNETES SECURITY · GO"),
+            f"about-{name}.svg": about(t, d),
+            f"repos-{name}.svg": repo_bars(t, d),
+            f"kyverno-{name}.svg": kyverno(t, d),
+            f"timeline-{name}.svg": timeline(t, d),
+            f"toolbox-{name}.svg": toolbox(t, d),
+            f"section-built-{name}.svg": section(t, "BUILT", "SIDE PROJECTS"),
         }
+        for i, p in enumerate(PROJECTS):
+            files[f"project{i+1}-{name}.svg"] = project_tile(t, *p, i)
         if d["weeks"]:
             files[f"heatmap-{name}.svg"] = heatmap(t, d)
         for i, w in enumerate(WORK):
